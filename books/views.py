@@ -64,7 +64,7 @@ class AuthorsView(View):
         except json.JSONDecodeError:
             return JsonResponse({"error": f"Невірний формат Json!"}, status=400)
         try:
-            new_author = Author.objects.create(
+            Author.objects.create(
                 name=author_json["name"],
             )
         except ValidationError as e:
@@ -147,7 +147,7 @@ class BooksView(View):
         author_data = book_json.get("author")
         author, created = Author.objects.get_or_create(name=author_data.get("name"))
         try:
-            new_book = Book.objects.create(
+            Book.objects.create(
                 name=book_json["name"],
                 author=author,
                 genre=book_json["genre"],
