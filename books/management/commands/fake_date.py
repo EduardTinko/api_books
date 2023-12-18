@@ -21,13 +21,15 @@ class Command(BaseCommand):
         for author in authors:
             k = random.randint(1, 3)
             for _ in range(k):
-                random_publication_date = fake.date_between(start_date='-20y', end_date='today')
+                random_publication_date = fake.date_between(
+                    start_date="-20y", end_date="today"
+                )
                 formatted_date = random_publication_date.strftime("%Y-%m-%d")
                 Book.objects.create(
                     name=fake.catch_phrase(),
                     author=author,
                     genre=fake.word(),
-                    publication_date=formatted_date
+                    publication_date=formatted_date,
                 )
 
         self.stdout.write(self.style.SUCCESS("Базу даних успішно заповнено"))
