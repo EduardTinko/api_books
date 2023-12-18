@@ -7,24 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies
+      - name: Install dependencies and run tests
         run: |
           pip install -r requirements.txt
-
-      - name: Set up PostgreSQL
-        run: |
-          sudo apt-get install postgresql
-          sudo service postgresql start
-          psql -c "CREATE USER postgres WITH PASSWORD 'password';" -U postgres
-          psql -c "ALTER USER postgres CREATEDB;" -U postgres
-          psql -c "CREATE DATABASE test_db;" -U postgres
-
-      - name: Run tests
-        run: |
-          export DATABASE_URL=postgres://postgres:password@localhost:5432/test_db
           pytest
