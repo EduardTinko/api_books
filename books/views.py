@@ -64,9 +64,8 @@ class AuthorsView(View):
         except json.JSONDecodeError:
             return JsonResponse({"error": f"Невірний формат Json!"}, status=400)
         try:
-            Author.objects.create(
-                name=author_json["name"],
-            )
+            Author(**author_json).full_clean()
+            Author.objects.create(**author_json)
         except ValidationError as e:
             return JsonResponse({"error": str(e)}, status=400)
         return JsonResponse({"message": "Автора додано"}, status=200)
@@ -144,21 +143,25 @@ class BooksView(View):
             book_json = json.loads(request.body)
         except json.JSONDecodeError:
             return JsonResponse({"error": f"Невірний формат Json!"}, status=400)
-        author_data = book_json.get("author")
-        author, created = Author.objects.get_or_create(name=author_data.get("name"))
+
         try:
-            Book.objects.create(
-                name=book_json["name"],
-                author=author,
-                genre=book_json["genre"],
-                publication_date=book_json["publication_date"],
-            )
+            author_json = book_json.get("author")
+            if author_json:
+                author, created = Author.objects.get_or_create(name=author_json)
+                book_json["author"] = author
+        except ValidationError as e:
+            return JsonResponse({"error": str(e)}, status=404)
+        try:
+            Book(**book_json).full_clean()
+            Book.objects.create(**book_json)
         except ValidationError as e:
             return JsonResponse({"error": str(e)}, status=400)
         return JsonResponse({"message": "Книгу додано"}, status=200)
 
     @staticmethod
-    def put(request, book_id):
+    def put(request, book_id=None):
+        if book_id is None:
+            return JsonResponse({"error": f"Передайте значення ID"}, status=404)
         try:
             book = Book.objects.get(pk=book_id)
             book_json = json.loads(request.body)
@@ -168,24 +171,29 @@ class BooksView(View):
             )
         except json.JSONDecodeError:
             return JsonResponse({"error": f"Невірний формат Json!"}, status=400)
-        for key, value in book_json.items():
-            try:
-                if key == "author":
-                    author_data = book_json.get("author")
-                    author, created = Author.objects.get_or_create(
-                        name=author_data.get("name")
-                    )
-                    book.author = author
-                else:
-                    setattr(book, key, book_json[key])
-                    book.save()
-            except ValidationError as e:
-                return JsonResponse({"error": str(e)}, status=400)
+
+        try:
+            author_json = book_json.get("author")
+            if author_json:
+                author, created = Author.objects.get_or_create(name=author_json)
+                book_json["author"] = author
+
+            for key, value in book_json.items():
+                if key != "author":
+                    setattr(book, key, value)
+
+            book.full_clean()
+            book.save()
+
+        except ValidationError as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
         return JsonResponse({"message": "Книгу оновлено"}, status=200)
 
     @staticmethod
-    def delete(request, book_id):
+    def delete(request, book_id=None):
+        if book_id is None:
+            return JsonResponse({"error": f"Передайте значення ID"}, status=404)
         try:
             book = Book.objects.get(pk=book_id)
             book.delete()

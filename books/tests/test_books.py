@@ -188,7 +188,7 @@ def test_post_book():
 
 
 @pytest.mark.django_db
-def test_post_book_validator_error():
+def test_post_book_validator_error_date():
     request = RequestFactory().post(
         "/",
         {
@@ -203,8 +203,37 @@ def test_post_book_validator_error():
     response = books_view.post(request)
     assert response.status_code == 400
     assert json.loads(response.content) == {
-        "error": "['“new2020-12-12” value has an invalid date format. It must be in YYYY-MM-DD format.']"
+        "error": "{'publication_date': ['“new2020-12-12” value has an invalid date "
+        "format. It must be in YYYY-MM-DD format.']}"
     }
+
+
+@pytest.mark.django_db
+def test_post_book_validator_error():
+    request = RequestFactory().post(
+        "/",
+        {
+            "name": "N",
+            "author": {"name": "s"},
+            "genre": "",
+            "publication_date": "2020-12-12",
+        },
+        content_type="application/json",
+    )
+    books_view = BooksView()
+    response = books_view.post(request)
+    assert response.status_code == 400
+    assert (
+        json.loads(response.content)
+        == {
+            "error": "{'name': ['Занадто коротке значення'], 'genre': ['This field cannot "
+            "be blank.']}"
+        }
+        != {
+            "error": "{'publication_date': ['“new2020-12-12” value has an invalid date "
+            "format. It must be in YYYY-MM-DD format.']}"
+        }
+    )
 
 
 @pytest.mark.django_db
@@ -277,7 +306,8 @@ def test_put_book_edit_bead_format():
     response = books_view.put(request, 2)
     assert response.status_code == 400
     assert json.loads(response.content) == {
-        "error": "['“new2020-12-12” value has an invalid date format. It must be in YYYY-MM-DD format.']"
+        "error": "{'publication_date': ['“new2020-12-12” value has an invalid date "
+        "format. It must be in YYYY-MM-DD format.']}"
     }
 
 
