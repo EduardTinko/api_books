@@ -4,7 +4,7 @@ import pytest
 from django.core.management import call_command
 from rest_framework.test import APIRequestFactory
 
-from books.models import Book, Author
+from books.models import Book
 from books.views import BookList, BookDetail
 
 
