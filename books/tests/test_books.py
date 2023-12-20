@@ -1,11 +1,10 @@
 import json
 
 import pytest
-from django.shortcuts import get_object_or_404
-from django.test import RequestFactory
+from django.core.management import call_command
 from rest_framework.test import APIRequestFactory
 
-from books.models import Book
+from books.models import Book, Author
 from books.views import BookList, BookDetail
 
 
@@ -162,6 +161,8 @@ def test_get_book_filter_incorrect_date():
 
 @pytest.mark.django_db
 def test_post_book_add():
+    call_command("flush", "--noinput")
+    call_command("loaddata", "test_books.json")
     factory = APIRequestFactory()
     request = factory.post(
         "/",
@@ -177,7 +178,7 @@ def test_post_book_add():
     response.render()
     assert response.status_code == 201
     assert json.loads(response.content) == {
-        "author": {"id": 4, "name": "2 Leo"},
+        "author": {"id": 3, "name": "2 Leo"},
         "genre": "New_horror2",
         "name": "NewBook2",
         "publication_date": "2020-10-10",

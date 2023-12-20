@@ -14,8 +14,8 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         author_data = validated_data.pop("author")
-        author_instance = AuthorSerializer().create(author_data)
-        book = Book.objects.create(author=author_instance, **validated_data)
+        author, created = Author.objects.get_or_create(name=author_data['name'])
+        book = Book.objects.create(author=author, **validated_data)
         return book
 
     def update(self, instance, validated_data):
@@ -28,12 +28,7 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
 
         author_data = validated_data.get("author")
         if author_data:
-            author_name = author_data.get("name")
-            author, created = Author.objects.get_or_create(name=author_name)
-
-            if not created:
-                author.name = author_data.get("name", author.name)
-                author.save()
+            author, created = Author.objects.get_or_create(name=author_data['name'])
 
             instance.author = author
             instance.save()

@@ -18,3 +18,4 @@ class Book(models.Model):
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="book")
     genre = models.CharField(max_length=50, validators=[validate_name])
     publication_date = models.DateField()
+
