@@ -1,132 +1,102 @@
 import json
 
 import pytest
-from django.test import RequestFactory
+from rest_framework.test import APIRequestFactory
 
-from books.views import AuthorsView
+from books.models import Author
+from books.views import AuthorList, AuthorDetail
 
 
 @pytest.mark.django_db
 def test_get_author_list():
-    request = RequestFactory().get("/")
-    authors_view = AuthorsView()
-    response = authors_view.get(request)
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    response = AuthorList.as_view()(request)
+    response.render()
     assert response.status_code == 200
-    assert json.loads(response.content) == {
-        "authors": [
-            {
-                "id": 1,
-                "name": "Leonardo",
-                "books": [
-                    {
-                        "genre": "horror",
-                        "id": 1,
-                        "name": "Red Book",
-                        "publication_date": "2012-12-12",
-                    }
-                ],
-            },
-            {
-                "id": 2,
-                "name": "Jhon Smit",
-                "books": [
-                    {
-                        "genre": "Comedy",
-                        "id": 2,
-                        "name": "Derby",
-                        "publication_date": "2020-12-12",
-                    }
-                ],
-            },
-        ]
-    }
+    assert json.loads(response.content) == [
+        {"id": 1, "name": "Leonardo"},
+        {"id": 2, "name": "Jhon Smit"},
+    ]
+
+
+@pytest.mark.django_db
+def test_get_author_empty():
+    Author.objects.all().delete()
+
+    factory = APIRequestFactory()
+    request = factory.get("/authors")
+    response = AuthorList.as_view()(request)
+    response.render()
+    assert response.status_code == 200
+    assert json.loads(response.content) == []
+
+
+@pytest.mark.django_db
+def test_get_author_filter_name():
+    factory = APIRequestFactory()
+    request = factory.get("/", {"name": "Leona"})
+    response = AuthorList.as_view()(request)
+    response.render()
+    assert response.status_code == 200
+    assert json.loads(response.content) == [{"id": 1, "name": "Leonardo"}]
+
+
+@pytest.mark.django_db
+def test_get_author_incorrect_filter_name():
+    factory = APIRequestFactory()
+    request = factory.get("/", {"name": "Ivan"})
+    response = AuthorList.as_view()(request)
+    response.render()
+    assert response.status_code == 200
+    assert json.loads(response.content) == []
 
 
 @pytest.mark.django_db
 def test_get_author_id():
-    request = RequestFactory().get("/")
-    authors_view = AuthorsView()
-    response = authors_view.get(request, 2)
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    response = AuthorDetail.as_view()(request, pk=1)
+    response.render()
     assert response.status_code == 200
-    assert json.loads(response.content) == {
-        "authors": [
-            {
-                "id": 2,
-                "name": "Jhon Smit",
-                "books": [
-                    {
-                        "genre": "Comedy",
-                        "id": 2,
-                        "name": "Derby",
-                        "publication_date": "2020-12-12",
-                    }
-                ],
-            },
-        ]
-    }
+    assert json.loads(response.content) == {"id": 1, "name": "Leonardo"}
 
 
 @pytest.mark.django_db
-def test_get_author_no_id():
-    request = RequestFactory().get("/")
-    authors_view = AuthorsView()
-    response = authors_view.get(request, 3)
+def test_get_author_incorrect_id():
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    response = AuthorDetail.as_view()(request, pk=3)
+    response.render()
     assert response.status_code == 404
-    assert json.loads(response.content) == {"error": "Автора з ID: 3 не знайдено."}
-
-
-@pytest.mark.django_db
-def test_get_author_id():
-    request = RequestFactory().get(
-        "/",
-        {
-            "name": "Leonardo",
-        },
-        content_type="application/json",
-    )
-    authors_view = AuthorsView()
-    response = authors_view.get(request)
-    assert response.status_code == 200
-    assert json.loads(response.content) == {
-        "authors": [
-            {
-                "id": 1,
-                "name": "Leonardo",
-                "books": [
-                    {
-                        "genre": "horror",
-                        "id": 1,
-                        "name": "Red Book",
-                        "publication_date": "2012-12-12",
-                    }
-                ],
-            }
-        ]
-    }
+    assert json.loads(response.content) == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
 def test_post_author_add():
-    request = RequestFactory().post(
-        "/",
-        {
-            "name": "New Leonardo",
-        },
-        content_type="application/json",
-    )
-    authors_view = AuthorsView()
-    response = authors_view.post(request)
-    assert response.status_code == 200
-    assert json.loads(response.content) == {"message": "Автора додано"}
+    factory = APIRequestFactory()
+    request = factory.post("/", {"name": "New Leonardo"})
+    response = AuthorList.as_view()(request)
+    response.render()
+    assert response.status_code == 201
+    assert json.loads(response.content) == {"id": 3, "name": "New Leonardo"}
 
 
 @pytest.mark.django_db
-def test_post_author_empty_request():
-    request = RequestFactory().post(
-        "/",
-        {},
-    )
-    authors_view = AuthorsView()
-    response = authors_view.post(request)
+def test_post_author_incorrect_add():
+    factory = APIRequestFactory()
+    request = factory.post("/", {"name": ""})
+    response = AuthorList.as_view()(request)
+    response.render()
     assert response.status_code == 400
-    assert json.loads(response.content) == {"error": "Невірний формат Json!"}
+    assert json.loads(response.content) == {"name": ["This field may not be blank."]}
+
+
+@pytest.mark.django_db
+def test_post_author_add_short_value():
+    factory = APIRequestFactory()
+    request = factory.post("/", {"name": "S"})
+    response = AuthorList.as_view()(request)
+    response.render()
+    assert response.status_code == 400
+    assert json.loads(response.content) == {"name": ["Value is too short."]}

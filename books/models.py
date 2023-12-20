@@ -6,7 +6,7 @@ from django.db import models
 
 def validate_name(value):
     if len(value) <= 1:
-        raise ValidationError(f"Занадто коротке значення")
+        raise ValidationError(f"Value is too short.")
 
 
 class Author(models.Model):

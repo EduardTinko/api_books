@@ -1,329 +1,329 @@
 import json
 
 import pytest
+from django.shortcuts import get_object_or_404
 from django.test import RequestFactory
+from rest_framework.test import APIRequestFactory
 
 from books.models import Book
-from books.views import BooksView
+from books.views import BookList, BookDetail
 
 
 @pytest.mark.django_db
 def test_get_book_list():
-    request = RequestFactory().get("/")
-    books_view = BooksView()
-    response = books_view.get(request)
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    response = BookList.as_view()(request)
+    response.render()
     assert response.status_code == 200
-    assert json.loads(response.content) == {
-        "books": [
-            {
-                "id": 1,
-                "name": "Red Book",
-                "author": {"id": 1, "name": "Leonardo"},
-                "genre": "horror",
-                "publication_date": "2012-12-12",
-            },
-            {
-                "id": 2,
-                "name": "Derby",
-                "author": {"id": 2, "name": "Jhon Smit"},
-                "genre": "Comedy",
-                "publication_date": "2020-12-12",
-            },
-        ]
-    }
+    assert json.loads(response.content) == [
+        {
+            "author": {"id": 1, "name": "Leonardo"},
+            "genre": "horror",
+            "name": "Red Book",
+            "publication_date": "2012-12-12",
+        },
+        {
+            "author": {"id": 2, "name": "Jhon Smit"},
+            "genre": "Comedy",
+            "name": "Derby",
+            "publication_date": "2020-12-12",
+        },
+    ]
 
 
 @pytest.mark.django_db
 def test_get_book_empty():
     Book.objects.all().delete()
 
-    request = RequestFactory().get("/")
-    books_view = BooksView()
-    response = books_view.get(request)
-    assert response.status_code == 404
-    assert json.loads(response.content) == {"error": "Книги не знайдено!"}
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    response = BookList.as_view()(request)
+    response.render()
+    assert response.status_code == 200
+    assert json.loads(response.content) == []
 
 
 @pytest.mark.django_db
 def test_get_book_id():
-    request = RequestFactory().get("/")
-    books_view = BooksView()
-    response = books_view.get(request, 1)
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    response = BookDetail.as_view()(request, pk=1)
+    response.render()
     assert response.status_code == 200
     assert json.loads(response.content) == {
-        "books": [
-            {
-                "id": 1,
-                "name": "Red Book",
-                "author": {"id": 1, "name": "Leonardo"},
-                "genre": "horror",
-                "publication_date": "2012-12-12",
-            }
-        ]
+        "author": {"id": 1, "name": "Leonardo"},
+        "genre": "horror",
+        "name": "Red Book",
+        "publication_date": "2012-12-12",
     }
 
 
 @pytest.mark.django_db
-def test_get_book_no_id():
-    request = RequestFactory().get("/")
-    books_view = BooksView()
-    response = books_view.get(request, 4)
+def test_get_book_incorrect_id():
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    response = BookDetail.as_view()(request, pk=4)
+    response.render()
     assert response.status_code == 404
-    assert json.loads(response.content) == {"error": "Книгу з ID: 4 не знайдено."}
+    assert json.loads(response.content) == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
 def test_get_book_filter_all():
-    request = RequestFactory().get(
+    factory = APIRequestFactory()
+    request = factory.get(
         "/",
         {
-            "name": "Red Book",
-            "author": "Leonardo",
+            "author__name": "Leo",
             "genre": "horror",
+            "name": "Red",
             "publication_date": "2012-12-12",
+            "publication_date__year": "2012",
+            "publication_date__day": "12",
+            "publication_date__month": "12",
         },
-        content_type="application/json",
     )
-    books_view = BooksView()
-    response = books_view.get(request)
+    response = BookList.as_view()(request)
+    response.render()
     assert response.status_code == 200
-    assert json.loads(response.content) == {
-        "books": [
-            {
-                "id": 1,
-                "name": "Red Book",
-                "author": {"id": 1, "name": "Leonardo"},
-                "genre": "horror",
-                "publication_date": "2012-12-12",
-            }
-        ]
-    }
+    assert json.loads(response.content) == [
+        {
+            "author": {"id": 1, "name": "Leonardo"},
+            "genre": "horror",
+            "name": "Red Book",
+            "publication_date": "2012-12-12",
+        }
+    ]
 
 
 @pytest.mark.django_db
-def test_get_book_filter_name_date():
-    request = RequestFactory().get(
+def test_get_book_filter_no_month():
+    factory = APIRequestFactory()
+    request = factory.get(
         "/",
         {
-            "name": "Der",
-            "publication_date": "2020-12-12",
+            "author__name": "Leo",
+            "genre": "horror",
+            "name": "Red",
+            "publication_date": "2012-12-12",
+            "publication_date__year": "2012",
+            "publication_date__day": "12",
+            "publication_date__month": "1",
         },
-        content_type="application/json",
     )
-    books_view = BooksView()
-    response = books_view.get(request)
+    response = BookList.as_view()(request)
+    response.render()
     assert response.status_code == 200
-    assert json.loads(response.content) == {
-        "books": [
-            {
-                "id": 2,
-                "name": "Derby",
-                "author": {"id": 2, "name": "Jhon Smit"},
-                "genre": "Comedy",
-                "publication_date": "2020-12-12",
-            },
-        ]
-    }
+    assert json.loads(response.content) == []
 
 
 @pytest.mark.django_db
-def test_get_book_filter_empty():
-    request = RequestFactory().get(
+def test_get_book_filter_no_name_genre():
+    factory = APIRequestFactory()
+    request = factory.get(
         "/",
         {
-            "name": "Derby",
-            "publication_date": "2000-12-12",
+            "author__name": "Leo",
+            "genre": "no",
+            "name": "no",
+            "publication_date": "2012-12-12",
+            "publication_date__year": "2012",
+            "publication_date__day": "12",
+            "publication_date__month": "12",
         },
-        content_type="application/json",
     )
-    books_view = BooksView()
-    response = books_view.get(request)
-    assert response.status_code == 404
-    assert json.loads(response.content) == {"error": "Книги не знайдено!"}
-
-
-@pytest.mark.django_db
-def test_get_book_filter_no_correct():
-    request = RequestFactory().get(
-        "/",
-        {
-            "name1": "Derby",
-            "publication_date": "20001-12-12",
-        },
-        content_type="application/json",
-    )
-    books_view = BooksView()
-    response = books_view.get(request)
-    assert response.status_code == 400
-    assert json.loads(response.content) == {
-        "error": "20001-12-12 value has an invalid date format. It must be in YYYY-MM-DD format."
-    }
-
-
-@pytest.mark.django_db
-def test_post_book_empty_request():
-    request = RequestFactory().post("/")
-    books_view = BooksView()
-    response = books_view.post(request)
-    assert response.status_code == 400
-    assert json.loads(response.content) == {"error": "Невірний формат Json!"}
-
-
-@pytest.mark.django_db
-def test_post_book():
-    request = RequestFactory().post(
-        "/",
-        {
-            "name": "New book",
-            "author": {"name": "new Jhon"},
-            "genre": "new horror",
-            "publication_date": "2020-12-12",
-        },
-        content_type="application/json",
-    )
-    books_view = BooksView()
-    response = books_view.post(request)
+    response = BookList.as_view()(request)
+    response.render()
     assert response.status_code == 200
-    assert json.loads(response.content) == {"message": "Книгу додано"}
+    assert json.loads(response.content) == []
 
 
 @pytest.mark.django_db
-def test_post_book_validator_error_date():
-    request = RequestFactory().post(
+def test_get_book_filter_incorrect_date():
+    factory = APIRequestFactory()
+    request = factory.get(
         "/",
         {
-            "name": "New book",
-            "author": {"name": "new Jhon"},
-            "genre": "new horror",
-            "publication_date": "new2020-12-12",
+            "author__name": "Leo",
+            "genre": "horror",
+            "name": "Red",
+            "publication_date": "2012-122-12",
+            "publication_date__year": "2012",
+            "publication_date__day": "12",
+            "publication_date__month": "12",
         },
-        content_type="application/json",
     )
-    books_view = BooksView()
-    response = books_view.post(request)
+    response = BookList.as_view()(request)
+    response.render()
     assert response.status_code == 400
+    assert json.loads(response.content) == {"publication_date": ["Enter a valid date."]}
+
+
+@pytest.mark.django_db
+def test_post_book_add():
+    factory = APIRequestFactory()
+    request = factory.post(
+        "/",
+        {
+            "author": {"name": "2 Leo"},
+            "genre": "New_horror2",
+            "name": "NewBook2",
+            "publication_date": "2020-10-10",
+        },
+        format="json",
+    )
+    response = BookList.as_view()(request)
+    response.render()
+    assert response.status_code == 201
     assert json.loads(response.content) == {
-        "error": "{'publication_date': ['“new2020-12-12” value has an invalid date "
-        "format. It must be in YYYY-MM-DD format.']}"
+        "author": {"id": 4, "name": "2 Leo"},
+        "genre": "New_horror2",
+        "name": "NewBook2",
+        "publication_date": "2020-10-10",
     }
 
 
 @pytest.mark.django_db
-def test_post_book_validator_error():
-    request = RequestFactory().post(
+def test_post_book_add_incorrect_author():
+    factory = APIRequestFactory()
+    request = factory.post(
         "/",
         {
+            "author": {"name": "N"},
+            "genre": "New_horror",
+            "name": "NewBook",
+            "publication_date": "2020-10-20",
+        },
+        format="json",
+    )
+    response = BookList.as_view()(request)
+    response.render()
+    assert response.status_code == 400
+    assert json.loads(response.content) == {"author": {"name": ["Value is too short."]}}
+
+
+@pytest.mark.django_db
+def test_post_book_add_incorrect_name_genre():
+    factory = APIRequestFactory()
+    request = factory.post(
+        "/",
+        {
+            "author": {"name": "Name"},
+            "genre": "N",
             "name": "N",
-            "author": {"name": "s"},
-            "genre": "",
-            "publication_date": "2020-12-12",
+            "publication_date": "2020-10-20",
         },
-        content_type="application/json",
+        format="json",
     )
-    books_view = BooksView()
-    response = books_view.post(request)
-    assert response.status_code == 400
-    assert (
-        json.loads(response.content)
-        == {
-            "error": "{'name': ['Занадто коротке значення'], 'genre': ['This field cannot "
-            "be blank.']}"
-        }
-        != {
-            "error": "{'publication_date': ['“new2020-12-12” value has an invalid date "
-            "format. It must be in YYYY-MM-DD format.']}"
-        }
-    )
-
-
-@pytest.mark.django_db
-def test_put_book_bead_request():
-    request = RequestFactory().put("/")
-    books_view = BooksView()
-    response = books_view.post(request)
-    assert response.status_code == 400
-    assert json.loads(response.content) == {"error": "Невірний формат Json!"}
-
-
-@pytest.mark.django_db
-def test_put_book_id():
-    request = RequestFactory().put(
-        "/",
-        {
-            "name": "edit book",
-            "author": {"name": "edit Jhon"},
-            "genre": "edit horror",
-            "publication_date": "2020-12-12",
-        },
-        content_type="application/json",
-    )
-    books_view = BooksView()
-    response = books_view.put(request, 4)
-    assert response.status_code == 404
-    assert json.loads(response.content) == {"error": "Книгу з ID: 4 не знайдено."}
-
-
-@pytest.mark.django_db
-def test_put_book_id_no_edit():
-    request = RequestFactory().put("/")
-    books_view = BooksView()
-    response = books_view.put(request, 2)
-    assert response.status_code == 400
-    assert json.loads(response.content) == {"error": "Невірний формат Json!"}
-
-
-@pytest.mark.django_db
-def test_put_book_id_edit():
-    request = RequestFactory().put(
-        "/",
-        {
-            "name": "edit book",
-            "author": {"name": "edit Jhon"},
-            "genre": "edit horror",
-            "publication_date": "2020-12-12",
-        },
-        content_type="application/json",
-    )
-    books_view = BooksView()
-    response = books_view.put(request, 2)
-    assert response.status_code == 200
-    assert json.loads(response.content) == {"message": "Книгу оновлено"}
-
-
-@pytest.mark.django_db
-def test_put_book_edit_bead_format():
-    request = RequestFactory().put(
-        "/",
-        {
-            "name": "edit book",
-            "author": {"name": "edit Jhon"},
-            "genre": "edit horror",
-            "publication_date": "new2020-12-12",
-        },
-        content_type="application/json",
-    )
-    books_view = BooksView()
-    response = books_view.put(request, 2)
+    response = BookList.as_view()(request)
+    response.render()
     assert response.status_code == 400
     assert json.loads(response.content) == {
-        "error": "{'publication_date': ['“new2020-12-12” value has an invalid date "
-        "format. It must be in YYYY-MM-DD format.']}"
+        "genre": ["Value is too short."],
+        "name": ["Value is too short."],
     }
 
 
 @pytest.mark.django_db
-def test_delete_book_id():
-    request = RequestFactory().delete("/")
-    books_view = BooksView()
-    response = books_view.delete(request, 2)
-    assert response.status_code == 200
-    assert json.loads(response.content) == {"message": "Книга успішно видалена"}
+def test_post_book_add_incorrect_date():
+    factory = APIRequestFactory()
+    request = factory.post(
+        "/",
+        {
+            "author": {"name": "Name"},
+            "genre": "New",
+            "name": "New",
+            "publication_date": "2020-102-20",
+        },
+        format="json",
+    )
+    response = BookList.as_view()(request)
+    response.render()
+    assert response.status_code == 400
+    assert json.loads(response.content) == {
+        "publication_date": [
+            "Date has wrong format. Use one of these formats " "instead: YYYY-MM-DD."
+        ]
+    }
 
 
 @pytest.mark.django_db
-def test_delete_book_no_id():
-    request = RequestFactory().delete("/")
-    books_view = BooksView()
-    response = books_view.delete(request, 3)
+def test_put_book_incorrect_request():
+    factory = APIRequestFactory()
+    request = factory.put(
+        "/",
+        {
+            "author": {"name": "N"},
+            "genre": "N",
+            "name": "N",
+            "publication_date": "2020-102-20",
+        },
+        format="json",
+    )
+    response = BookDetail.as_view()(request, pk=1)
+    response.render()
+    assert response.status_code == 400
+    assert json.loads(response.content) == {
+        "author": {"name": ["Value is too short."]},
+        "genre": ["Value is too short."],
+        "name": ["Value is too short."],
+        "publication_date": [
+            "Date has wrong format. Use one of these formats " "instead: YYYY-MM-DD."
+        ],
+    }
+
+
+@pytest.mark.django_db
+def test_put_book_correct_request():
+    factory = APIRequestFactory()
+    request = factory.put(
+        "/",
+        {
+            "author": {"name": "New"},
+            "genre": "Name",
+            "name": "New",
+            "publication_date": "2020-10-20",
+        },
+        format="json",
+    )
+    response = BookDetail.as_view()(request, pk=1)
+    response.render()
+    assert response.status_code == 200
+    assert json.loads(response.content) == {
+        "author": {"id": 3, "name": "New"},
+        "genre": "Name",
+        "name": "New",
+        "publication_date": "2020-10-20",
+    }
+
+
+@pytest.mark.django_db
+def test_put_book_correct_request():
+    factory = APIRequestFactory()
+    request = factory.put(
+        "/",
+        {
+            "author": {"name": "New"},
+            "genre": "Name",
+            "name": "New",
+            "publication_date": "2020-10-20",
+        },
+        format="json",
+    )
+    response = BookDetail.as_view()(request, pk=3)
+    response.render()
     assert response.status_code == 404
-    assert json.loads(response.content) == {"error": "Книгу з ID: 3 не знайдено."}
+    assert json.loads(response.content) == {'detail': 'Not found.'}
+
+
+@pytest.mark.django_db
+def test_delete_book():
+    factory = APIRequestFactory()
+    request = factory.delete("/")
+    response = BookDetail.as_view()(request, pk=1)
+    response.render()
+    assert response.status_code == 204
+    book = Book.objects.filter(pk=1)
+    assert not book.exists()
+
