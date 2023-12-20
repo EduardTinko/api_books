@@ -4,6 +4,8 @@
   "image": "heroku/python",
   "repository": "https://github.com/EduardTinko/api_books",
   "keywords": ["python", "django"],
+    "addons": ["heroku-postgresql:mini"],
+
   "env": {
     "DJANGO_SECRET_KEY": {
       "description": "The secret key for the Django application.",
@@ -11,6 +13,9 @@
     }
   },
   "environments": {
+    "review": {
+      "addons": ["heroku-postgresql:mini"]
+      },
     "test": {
       "scripts": {
         "test": "./manage.py test --debug-mode"
