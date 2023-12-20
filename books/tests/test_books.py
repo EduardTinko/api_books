@@ -314,7 +314,7 @@ def test_put_book_correct_request():
     response = BookDetail.as_view()(request, pk=3)
     response.render()
     assert response.status_code == 404
-    assert json.loads(response.content) == {'detail': 'Not found.'}
+    assert json.loads(response.content) == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
@@ -326,4 +326,3 @@ def test_delete_book():
     assert response.status_code == 204
     book = Book.objects.filter(pk=1)
     assert not book.exists()
-
