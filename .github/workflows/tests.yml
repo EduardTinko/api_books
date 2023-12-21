@@ -1,4 +1,4 @@
-name: Integration Tests
+name: PyTests
 
 on: [push, pull_request]
 
@@ -26,8 +26,7 @@ jobs:
     - name: Run Django Server
       run: |
         python manage.py runserver &
-        sleep 5
+        sleep 10
         pytest
+        sleep 5
         pkill -f "python manage.py runserver"
-      env:
-        DJANGO_DEBUG: "True"
