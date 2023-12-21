@@ -26,9 +26,6 @@ jobs:
     - name: Run Django Server
       run: |
         python manage.py runserver
-        chmod +x wait-for-it.sh
-        ./wait-for-it.sh -t 60 localhost:8000 -- echo "Django server is ready."
-
-    - name: Run Integration Tests
-      run: |
         pytest
+      env:
+        DJANGO_DEBUG: "True"
