@@ -25,7 +25,9 @@ jobs:
 
     - name: Run Django Server
       run: |
-        python manage.py runserver
+        python manage.py runserver &
+        sleep 5
         pytest
+        pkill -f "python manage.py runserver"
       env:
         DJANGO_DEBUG: "True"
