@@ -25,5 +25,13 @@ jobs:
 
     - name: Run Django Server
       run: |
-        python manage.py runserver 8000
+        python manage.py runserver
+
+    - name: Wait for Django Server to start
+      run: |
+        echo "Waiting for Django server to start..."
+        sleep 10  # You may need to adjust the sleep time based on your application's startup time.
+
+    - name: Run pytest
+      run: |
         pytest
