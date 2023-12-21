@@ -3,7 +3,7 @@ import uuid
 import requests
 import unittest
 
-API_URL = "http://127.0.0.1:8000/api"
+API_URL = "http://localhost:8000/api"
 
 
 class TestAuthor(unittest.TestCase):
