@@ -19,7 +19,7 @@ class TestAuthor(unittest.TestCase):
     def test_get_authors():
         get_authors = requests.get(API_URL + "/authors/")
         get_authors.raise_for_status()
-        assert get_authors.status_code == 201
+        assert get_authors.status_code == 200
 
     def test_get_authors_by_id(self):
         self.test_create_author()
