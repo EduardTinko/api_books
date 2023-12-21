@@ -63,16 +63,6 @@ def test_get_author_id():
 
 
 @pytest.mark.django_db
-def test_post_author_add():
-    factory = APIRequestFactory()
-    request = factory.post("/", {"name": "New Leonardo"})
-    response = AuthorList.as_view()(request)
-    response.render()
-    assert response.status_code == 201
-    assert json.loads(response.content) == {"id": 3, "name": "New Leonardo"}
-
-
-@pytest.mark.django_db
 def test_get_author_incorrect_id():
     factory = APIRequestFactory()
     request = factory.get("/")
@@ -80,6 +70,16 @@ def test_get_author_incorrect_id():
     response.render()
     assert response.status_code == 404
     assert json.loads(response.content) == {"detail": "Not found."}
+
+
+@pytest.mark.django_db
+def test_post_author_add():
+    factory = APIRequestFactory()
+    request = factory.post("/", {"name": "New Leonardo"})
+    response = AuthorList.as_view()(request)
+    response.render()
+    assert response.status_code == 201
+    assert json.loads(response.content) == {"id": 3, "name": "New Leonardo"}
 
 
 @pytest.mark.django_db

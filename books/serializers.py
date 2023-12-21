@@ -14,7 +14,9 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         author_data = validated_data.pop("author")
-        author, created = Author.objects.get_or_create(name=author_data["name"])
+        author = Author.objects.filter(name=author_data["name"]).first()
+        if not author:
+            author = Author.objects.create(name=author_data["name"])
         book = Book.objects.create(author=author, **validated_data)
         return book
 
@@ -28,7 +30,9 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
 
         author_data = validated_data.get("author")
         if author_data:
-            author, created = Author.objects.get_or_create(name=author_data["name"])
+            author = Author.objects.filter(name=author_data["name"]).first()
+            if not author:
+                author = Author.objects.create(name=author_data["name"])
 
             instance.author = author
             instance.save()
@@ -37,4 +41,4 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Book
-        fields = ["name", "author", "genre", "publication_date"]
+        fields = ["id", "name", "author", "genre", "publication_date"]

@@ -17,12 +17,14 @@ def test_get_book_list():
     assert response.status_code == 200
     assert json.loads(response.content) == [
         {
+            "id": 1,
             "author": {"id": 1, "name": "Leonardo"},
             "genre": "horror",
             "name": "Red Book",
             "publication_date": "2012-12-12",
         },
         {
+            "id": 2,
             "author": {"id": 2, "name": "Jhon Smit"},
             "genre": "Comedy",
             "name": "Derby",
@@ -51,6 +53,7 @@ def test_get_book_id():
     response.render()
     assert response.status_code == 200
     assert json.loads(response.content) == {
+        "id": 1,
         "author": {"id": 1, "name": "Leonardo"},
         "genre": "horror",
         "name": "Red Book",
@@ -88,6 +91,7 @@ def test_get_book_filter_all():
     assert response.status_code == 200
     assert json.loads(response.content) == [
         {
+            "id": 1,
             "author": {"id": 1, "name": "Leonardo"},
             "genre": "horror",
             "name": "Red Book",
@@ -178,6 +182,7 @@ def test_post_book_add():
     response.render()
     assert response.status_code == 201
     assert json.loads(response.content) == {
+        "id": 3,
         "author": {"id": 3, "name": "2 Leo"},
         "genre": "New_horror2",
         "name": "NewBook2",
@@ -292,6 +297,7 @@ def test_put_book_correct_request():
     response.render()
     assert response.status_code == 200
     assert json.loads(response.content) == {
+        "id": 1,
         "author": {"id": 3, "name": "New"},
         "genre": "Name",
         "name": "New",
