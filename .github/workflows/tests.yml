@@ -1,0 +1,32 @@
+name: PyTests
+
+on: [push, pull_request]
+
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Apply database migrations (if applicable)
+      run: |
+        python manage.py migrate
+
+    - name: Run Django Server
+      run: |
+        python manage.py runserver &
+        sleep 10
+        pytest
+        sleep 5
+        pkill -f "python manage.py runserver"
