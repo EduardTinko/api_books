@@ -90,15 +90,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
+try:
+    POSTGRES_PASSWORD = open(os.getenv("POSTGRES_PASSWORD_FILE", "")).read().strip()
+except FileNotFoundError:
+    POSTGRES_PASSWORD = "for_tests"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if "GITHUB_ACTIONS" in os.environ:
+if os.getenv("DOCKERIZED", False):
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB", "mock-db"),
+            "USER": "postgres",
+            "PASSWORD": POSTGRES_PASSWORD,
+            "HOST": "db",
+            "PORT": "5432",
         }
     }
 
@@ -116,16 +124,10 @@ elif IS_HEROKU_APP:
         ),
     }
 else:
-    # When running locally in development or in CI, a sqlite database file will be used instead
-    # to simplify initial setup. Longer term it's recommended to use Postgres locally too.
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "postgres",
-            "USER": "postgres",
-            "PASSWORD": "password",
-            "HOST": "127.0.0.1",
-            "PORT": "5432",
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 
@@ -189,3 +191,18 @@ REST_FRAMEWORK = {
     # ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"]
 }
+
+if os.getenv("DOCKERIZED", False):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": "redis://redis:6379/1",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379",
+        }
+    }
