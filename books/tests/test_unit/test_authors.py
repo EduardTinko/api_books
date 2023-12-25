@@ -82,7 +82,9 @@ class TestAuthor(TestCase):
         response = AuthorList.as_view()(request)
         response.render()
         assert response.status_code == 400
-        assert json.loads(response.content) == {"name": ["This field may not be blank."]}
+        assert json.loads(response.content) == {
+            "name": ["This field may not be blank."]
+        }
 
     def test_post_author_add_short_value(self):
         factory = APIRequestFactory()

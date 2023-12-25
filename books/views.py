@@ -10,7 +10,7 @@ from .models import Author, Book
 from .serializers import AuthorSerializer, BookSerializer
 
 
-@method_decorator(cache_page(60 * 5), name='dispatch')
+@method_decorator(cache_page(60 * 5), name="dispatch")
 class AuthorList(generics.ListCreateAPIView):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
@@ -22,7 +22,7 @@ class AuthorList(generics.ListCreateAPIView):
         cache.clear()
 
 
-@method_decorator(cache_page(60 * 5), name='dispatch')
+@method_decorator(cache_page(60 * 5), name="dispatch")
 class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
@@ -32,7 +32,7 @@ class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
         cache.clear()
 
 
-@method_decorator(cache_page(60 * 5), name='dispatch')
+@method_decorator(cache_page(60 * 5), name="dispatch")
 class BookList(generics.ListCreateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
@@ -44,7 +44,7 @@ class BookList(generics.ListCreateAPIView):
         cache.clear()
 
 
-@method_decorator(cache_page(60 * 5), name='dispatch')
+@method_decorator(cache_page(60 * 5), name="dispatch")
 class BookDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer

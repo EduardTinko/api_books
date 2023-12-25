@@ -152,7 +152,9 @@ class TestAuthor(TestCase):
         response = BookList.as_view()(request)
         response.render()
         assert response.status_code == 400
-        assert json.loads(response.content) == {"publication_date": ["Enter a valid date."]}
+        assert json.loads(response.content) == {
+            "publication_date": ["Enter a valid date."]
+        }
 
     def test_post_book_add(self):
         factory = APIRequestFactory()
@@ -192,7 +194,9 @@ class TestAuthor(TestCase):
         response = BookList.as_view()(request)
         response.render()
         assert response.status_code == 400
-        assert json.loads(response.content) == {"author": {"name": ["Value is too short."]}}
+        assert json.loads(response.content) == {
+            "author": {"name": ["Value is too short."]}
+        }
 
     def test_post_book_add_incorrect_name_genre(self):
         factory = APIRequestFactory()
@@ -231,7 +235,8 @@ class TestAuthor(TestCase):
         assert response.status_code == 400
         assert json.loads(response.content) == {
             "publication_date": [
-                "Date has wrong format. Use one of these formats " "instead: YYYY-MM-DD."
+                "Date has wrong format. Use one of these formats "
+                "instead: YYYY-MM-DD."
             ]
         }
 
@@ -255,7 +260,8 @@ class TestAuthor(TestCase):
             "genre": ["Value is too short."],
             "name": ["Value is too short."],
             "publication_date": [
-                "Date has wrong format. Use one of these formats " "instead: YYYY-MM-DD."
+                "Date has wrong format. Use one of these formats "
+                "instead: YYYY-MM-DD."
             ],
         }
 
