@@ -7,15 +7,6 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:latest
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: your_database_name
-          POSTGRES_USER: your_username
-          POSTGRES_PASSWORD: your_password
-
       redis:
         image: redis:latest
         ports:
@@ -34,10 +25,14 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    - name: Apply database migrations
+    - name: Apply database migrations (if applicable)
       run: |
         python manage.py migrate
 
-    - name: Run tests
+    - name: Run Django Server
       run: |
+        python manage.py runserver &
+        sleep 10
         pytest
+        sleep 5
+        pkill -f "python manage.py runserver"
